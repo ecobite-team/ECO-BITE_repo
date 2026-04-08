@@ -24,12 +24,16 @@ export default function AdminPanel() {
   }, [router]);
 
   // --- 2. DATA FETCHING ---
+  // --- 2. DATA FETCHING ---
   useEffect(() => {
     const fetchApps = async () => {
       try {
         const response = await fetch('/api/admin/applications');
         const result = await response.json();
-        setApplications(result.data);
+        
+        // THE SAFETY NET: Prevents the .map() function from crashing the table
+        setApplications(result.data || []); 
+        
       } catch (error) {
         console.error("Failed to fetch:", error);
       } finally {
