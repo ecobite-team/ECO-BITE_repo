@@ -8,8 +8,6 @@ export default function AdminPanel() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // NEW: State for our SMS Notification feature
-  const [isSendingSMS, setIsSendingSMS] = useState(false);
 
   // --- 1. THE BOUNCER (SECURITY) ---
   useEffect(() => {
@@ -63,17 +61,6 @@ export default function AdminPanel() {
     }
   };
 
-  // --- 3. THE SMS NOTIFICATION (MODULE 3, MEMBER 2) ---
-  const handleBroadcastSMS = () => {
-    setIsSendingSMS(true);
-    
-    // Fake a 2-second network delay to make it feel real
-    setTimeout(() => {
-      setIsSendingSMS(false);
-      alert("📲 SMS BROADCAST SENT!\n\nMessage: 'New Surplus Food is available near you! Open Eco-Bite to reserve now.'\n\nSent to: 142 registered consumers.");
-    }, 2000);
-  };
-
   return (
     <main className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
@@ -82,17 +69,6 @@ export default function AdminPanel() {
             <h1 className="text-3xl font-bold text-gray-900">Platform Admin</h1>
             <p className="text-gray-500 mt-2">Manage partner verifications and access.</p>
           </div>
-          
-          {/* THE NEW SMS BUTTON */}
-          <button 
-            onClick={handleBroadcastSMS}
-            disabled={isSendingSMS}
-            className={`px-4 py-2 rounded-md font-bold shadow-sm transition ${
-              isSendingSMS ? 'bg-gray-400 text-white cursor-wait' : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {isSendingSMS ? "Broadcasting..." : "📱 Broadcast SMS Alert"}
-          </button>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
