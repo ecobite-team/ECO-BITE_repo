@@ -9,15 +9,19 @@ export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState("consumer");
   const [selectedRestaurant, setSelectedRestaurant] = useState("");
 
-  // Fetch restaurants so the user can choose which one to log in as
   useEffect(() => {
     const fetchRestaurants = async () => {
-      const response = await fetch('/api/restaurants');
-      const result = await response.json();
-      // Only let them log in as Approved restaurants
-      const approved = result.data.filter(r => r.status === 'Approved');
-      setRestaurants(approved);
-      if (approved.length > 0) setSelectedRestaurant(JSON.stringify(approved[0]));
+      try {
+        const response = await fetch('/api/restaurants');
+        const result = await response.json();
+        
+        const approved = (result.data || []).filter(r => r.status === 'Approved');
+        
+        setRestaurants(approved);
+        if (approved.length > 0) setSelectedRestaurant(JSON.stringify(approved[0]));
+      } catch (error) {
+        console.error("Failed to load restaurants. API might be missing.");
+      }
     };
     fetchRestaurants();
   }, []);
