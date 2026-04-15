@@ -114,8 +114,16 @@ export default function FoodPage() {
               <div className="flex flex-col items-end">
                 <div>
                   <span className="line-through text-gray-400 mr-2">${item.originalPrice}</span> 
-                  <span className="text-green-600 font-bold text-xl">${item.discountedPrice}</span>
+                  {/* UPDATE: Now shows the dynamic price! */}
+                  <span className="text-green-600 font-bold text-xl">${item.dynamicPrice || item.discountedPrice}</span>
                 </div>
+                
+                {/* UPDATE: The Red Expiry Badge! */}
+                {item.isSurgeDiscounted && (
+                  <span className="text-xs font-bold text-white bg-red-500 px-2 py-1 rounded animate-pulse mt-1">
+                    ⚡ Expiry Price Drop! ({item.hoursLeft}h left)
+                  </span>
+                )}
               </div>
 
               {/* Just static visual tags. Member 2 will hook up the logic later! */}
