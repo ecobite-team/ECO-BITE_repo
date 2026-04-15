@@ -109,25 +109,27 @@ export default function AdminPanel() {
                           {currentStatus}
                         </span>
                       </td>
-                      <td className="p-4 text-right space-x-2">
-                        {currentStatus === "Pending" ? (
-                          <>
-                            <button 
-                              onClick={() => handleVerify(org._id, org.orgType, 'Approve')}
-                              className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition"
-                            >
-                              Approve
-                            </button>
-                            <button 
-                              onClick={() => handleVerify(org._id, org.orgType, 'Reject')}
-                              className="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300 transition"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        ) : (
-                          <span className="text-sm text-gray-400 italic">Action Complete</span>
-                        )}
+                      <td className="p-4">
+                        <div className="flex justify-end items-center gap-2">
+                          {currentStatus === "Pending" ? (
+                            <>
+                              <button 
+                                onClick={() => handleVerify(org._id, org.orgType, 'Approve')}
+                                className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition shadow-sm"
+                              >
+                                Approve
+                              </button>
+                              <button 
+                                onClick={() => handleVerify(org._id, org.orgType, 'Reject')}
+                                className="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-300 transition shadow-sm"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-sm text-gray-400 italic">Action Complete</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

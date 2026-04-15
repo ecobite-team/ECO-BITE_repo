@@ -53,7 +53,13 @@ export default function AddFoodPage() {
       if (response.ok) {
         alert("Success! Sent to MongoDB.");
         setFormData({
-          name: "", quantity: "", originalPrice: "", discountedPrice: "", isVegan: false, isHalal: false
+          name: "", 
+          quantity: "", 
+          originalPrice: "", 
+          discountedPrice: "", 
+          isVegan: false, 
+          isHalal: false,
+          expiryTime: "" // <-- Add this!
         });
       } else {
         alert("Uh oh. Something went wrong on the server.");
