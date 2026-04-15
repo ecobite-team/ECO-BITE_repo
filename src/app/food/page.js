@@ -65,6 +65,8 @@ export default function FoodPage() {
   // ONLY Member 4's Watchlist Filter (Member 2 will add the others later!)
   const displayedFoods = foods.filter((item) => {
     if (activeFilter === "All") return true;
+    if (activeFilter === "Vegan") return item.isVegan === true;
+    if (activeFilter === "Halal") return item.isHalal === true;
     if (activeFilter === "Favorites") return favorites.includes(item._id); 
     return true;
   });
@@ -76,7 +78,7 @@ export default function FoodPage() {
 
         {/* Member 4's Watchlist Button (Placeholder for Member 2) */}
         <div className="flex gap-4 mb-8">
-          {["All", "Favorites"].map((filterType) => (
+          {["All", "Vegan", "Halal", "Favorites"].map((filterType) => (
             <button
               key={filterType}
               className={`px-4 py-2 rounded-full font-medium transition ${
