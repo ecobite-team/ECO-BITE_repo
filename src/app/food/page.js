@@ -6,13 +6,12 @@ import FoodMap from '../../components/FoodMap';
 export default function FoodPage() {
   const [foods, setFoods] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState("All");
   
-  // NEW: The Favorites Memory Bank
+  // THE FIX: Upgraded to an array to hold MULTIPLE filters!
+  const [activeFilters, setActiveFilters] = useState(["All"]);
   const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
-    // 1. Fetch the food from the database
     const fetchFood = async () => {
       try {
         const response = await fetch('/api/food');
@@ -26,24 +25,42 @@ export default function FoodPage() {
     };
     fetchFood();
 
-    // 2. Load any saved favorites from the browser's local storage
     const savedFavs = localStorage.getItem("ecoBiteFavorites");
     if (savedFavs) {
       setFavorites(JSON.parse(savedFavs));
     }
   }, []);
 
-  // NEW: The Heart Toggle Function
   const toggleFavorite = (id) => {
     let newFavs;
     if (favorites.includes(id)) {
-      newFavs = favorites.filter(favId => favId !== id); // Remove it
+      newFavs = favorites.filter(favId => favId !== id); 
     } else {
-      newFavs = [...favorites, id]; // Add it
+      newFavs = [...favorites, id]; 
     }
     
     setFavorites(newFavs);
-    localStorage.setItem("ecoBiteFavorites", JSON.stringify(newFavs)); // Save to browser!
+    localStorage.setItem("ecoBiteFavorites", JSON.stringify(newFavs)); 
+  };
+
+  // THE FIX: The new logic to toggle multiple buttons on and off
+  const handleFilterToggle = (filterType) => {
+    if (filterType === "All") {
+      setActiveFilters(["All"]);
+      return;
+    }
+
+    // Remove 'All' if they click a specific diet
+    let newFilters = activeFilters.filter(f => f !== "All");
+
+    if (newFilters.includes(filterType)) {
+      newFilters = newFilters.filter(f => f !== filterType); // Turn off
+      if (newFilters.length === 0) newFilters = ["All"]; // If empty, go back to All
+    } else {
+      newFilters.push(filterType); // Turn on
+    }
+    
+    setActiveFilters(newFilters);
   };
 
   const handleReserve = async (foodId, foodName) => {
@@ -68,12 +85,15 @@ export default function FoodPage() {
     }
   };
 
-  // UPDATED: The Filter Logic now includes the Watchlist!
+  // THE FIX: The Filter logic now checks against the whole array
   const displayedFoods = foods.filter((item) => {
-    if (activeFilter === "All") return true;
-    if (activeFilter === "Vegan") return item.isVegan === true;
-    if (activeFilter === "Halal") return item.isHalal === true;
-    if (activeFilter === "Favorites") return favorites.includes(item._id); // Only show hearted items!
+    if (activeFilters.includes("All")) return true;
+
+    for (const filter of activeFilters) {
+      if (filter === "Vegan" && !item.isVegan) return false;
+      if (filter === "Halal" && !item.isHalal) return false;
+      if (filter === "Favorites" && !favorites.includes(item._id)) return false;
+    }
     return true;
   });
 
@@ -84,17 +104,17 @@ export default function FoodPage() {
         
         {!loading && <FoodMap foods={displayedFoods} />}
 
-        {/* UPDATED: We added 'Favorites' to our array of buttons */}
         <div className="flex gap-4 mb-8">
           {["All", "Vegan", "Halal", "Favorites"].map((filterType) => (
             <button
               key={filterType}
+              // THE FIX: Highlights the button if it's currently inside our active array
               className={`px-4 py-2 rounded-full font-medium transition ${
-                activeFilter === filterType 
+                activeFilters.includes(filterType) 
                   ? "bg-green-600 text-white shadow-md" 
                   : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-100"
               }`}
-              onClick={() => setActiveFilter(filterType)}
+              onClick={() => handleFilterToggle(filterType)}
             >
               {filterType === "Favorites" ? "❤️ Watchlist" : filterType}
             </button>
@@ -109,7 +129,6 @@ export default function FoodPage() {
             {displayedFoods.map((item) => (
               <div key={item._id} className="bg-white rounded-lg shadow-md p-6 border-t-4 border-green-500 relative">
                 
-                {/* NEW: The Clickable Heart in the top right corner */}
                 <div className="flex justify-between items-start mb-2">
                   <h2 className="text-xl font-bold text-gray-800 capitalize pr-8">{item.name}</h2>
                   <button 
@@ -160,9 +179,9 @@ export default function FoodPage() {
             {displayedFoods.length === 0 && (
               <div className="col-span-full text-center py-10">
                 <p className="text-gray-500 text-lg">
-                  {activeFilter === "Favorites" 
-                    ? "Your watchlist is empty. Click the heart icons to save your favorite meals!" 
-                    : "No food matches this dietary filter."}
+                  {activeFilters.includes("Favorites") 
+                    ? "Your watchlist is empty or doesn't match the other filters." 
+                    : "No food matches your selected dietary filters."}
                 </p>
               </div>
             )}

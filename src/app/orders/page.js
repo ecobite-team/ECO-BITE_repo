@@ -6,14 +6,15 @@ export default function ConsumerDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // MEMBER 1: Review System States
   const [activeReviewId, setActiveReviewId] = useState(null);
   const [rating, setRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
   
-  // MEMBER 4: AI Recipe States
   const [aiRecipe, setAiRecipe] = useState(null);
   const [generating, setGenerating] = useState(false);
+
+  // THE FIX: A state to remember how many vouchers we've claimed!
+  const [vouchersClaimed, setVouchersClaimed] = useState(0);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -28,6 +29,10 @@ export default function ConsumerDashboard() {
       }
     };
     fetchOrders();
+
+    // Check browser memory for previously claimed vouchers
+    const savedVouchers = localStorage.getItem("ecoBiteVouchers");
+    if (savedVouchers) setVouchersClaimed(Number(savedVouchers));
   }, []);
 
   const handleSubmitReview = async (orderId) => {
@@ -51,6 +56,14 @@ export default function ConsumerDashboard() {
     }
   };
 
+  // THE FIX: The Voucher Claim Function
+  const handleClaimVoucher = () => {
+    alert("🎉 Voucher Claimed! Check your student email for the QR code.");
+    const newCount = vouchersClaimed + 1;
+    setVouchersClaimed(newCount);
+    localStorage.setItem("ecoBiteVouchers", newCount); // Save to browser memory
+  };
+
   const completedOrders = orders.filter(o => o.status === 'Completed');
   const totalMealsSaved = completedOrders.length;
   const co2Reduced = totalMealsSaved * 2.5; 
@@ -62,8 +75,11 @@ export default function ConsumerDashboard() {
   if (ecoPoints >= 1000) badge = "🌳 Food Waste Hero";
 
   const pointsToNextReward = 500 - (ecoPoints % 500);
-  const rewardsAvailable = Math.floor(ecoPoints / 500);
   const progressPercentage = (ecoPoints % 500) / 5;
+  
+  // THE FIX: Subtract claimed vouchers from total earned vouchers
+  const totalVouchersEarned = Math.floor(ecoPoints / 500);
+  const rewardsAvailable = Math.max(0, totalVouchersEarned - vouchersClaimed);
 
   const generateMagicRecipe = async () => {
     setGenerating(true);
@@ -138,7 +154,7 @@ export default function ConsumerDashboard() {
                   ? 'bg-yellow-500 text-white hover:bg-yellow-600' 
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                }`}
-               onClick={() => alert("🎉 Voucher Claimed! Check your student email for the QR code.")}
+               onClick={handleClaimVoucher}
              >
                Redeem Voucher ({rewardsAvailable} Available)
              </button>
@@ -193,7 +209,6 @@ export default function ConsumerDashboard() {
                     </span>
                   </div>
 
-                  {/* MEMBER 1: Review System Component */}
                   {order.status === 'Completed' && !order.rating && activeReviewId !== order._id && (
                     <button 
                       onClick={() => setActiveReviewId(order._id)}
