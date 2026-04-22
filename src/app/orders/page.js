@@ -2,22 +2,25 @@
 
 import { useState, useEffect } from "react";
 
-export default function OrderHistory() {
+export default function ConsumerDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-
-
-  // AI Recipe States
+  // MEMBER 1: Review System States
+  const [activeReviewId, setActiveReviewId] = useState(null);
+  const [rating, setRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  
+  // MEMBER 4: AI Recipe States
   const [aiRecipe, setAiRecipe] = useState(null);
-  const [generating, setGenerating] = useState(false);  
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const response = await fetch('/api/orders');
         const result = await response.json();
-        setOrders(result.data || []);
+        setOrders(result.data);
       } catch (error) {
         console.error("Failed to load orders:", error);
       } finally {
@@ -27,13 +30,31 @@ export default function OrderHistory() {
     fetchOrders();
   }, []);
 
-  // MEMBER 4'S MODULE 2 FEATURE: Consumer Impact Analytics
+  const handleSubmitReview = async (orderId) => {
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, rating, reviewText })
+      });
+
+      if (response.ok) {
+        setOrders(prev => prev.map(order => 
+          order._id === orderId ? { ...order, rating, reviewText } : order
+        ));
+        setActiveReviewId(null);
+        setRating(5);
+        setReviewText("");
+      }
+    } catch (error) {
+      console.error("Failed to submit review");
+    }
+  };
+
   const completedOrders = orders.filter(o => o.status === 'Completed');
   const totalMealsSaved = completedOrders.length;
-  const co2Reduced = totalMealsSaved * 2.5; // Average 2.5kg CO2 saved per meal
-  const totalMoneySaved = totalMealsSaved * 8.50; // Estimated $8.50 average savings per rescue
+  const co2Reduced = totalMealsSaved * 2.5; 
 
-  // --- NEW: GAMIFICATION MATH ---
   const ecoPoints = totalMealsSaved * 100;
   
   let badge = "🌱 Seedling";
@@ -42,7 +63,7 @@ export default function OrderHistory() {
 
   const pointsToNextReward = 500 - (ecoPoints % 500);
   const rewardsAvailable = Math.floor(ecoPoints / 500);
-  const progressPercentage = (ecoPoints % 500) / 5; // Turns 0-500 into 0-100%
+  const progressPercentage = (ecoPoints % 500) / 5;
 
   const generateMagicRecipe = async () => {
     setGenerating(true);
@@ -76,22 +97,17 @@ export default function OrderHistory() {
         
         <h1 className="text-3xl font-bold text-gray-900 mb-6">My Impact Dashboard</h1>
         
-        {/* Module 2 Impact Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-            <p className="text-gray-500 text-sm font-medium">Meals Rescued</p>
+            <p className="text-gray-500 text-sm font-medium">Lifetime Meals Rescued</p>
             <p className="text-4xl font-black text-gray-800">{totalMealsSaved}</p>
           </div>
           <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-            <p className="text-gray-500 text-sm font-medium">Estimated CO₂ Reduced</p>
-            <p className="text-4xl font-black text-gray-800">{co2Reduced} <span className="text-lg">kg</span></p>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
-            <p className="text-gray-500 text-sm font-medium">Money Saved</p>
-            <p className="text-4xl font-black text-gray-800">${totalMoneySaved.toFixed(2)}</p>
+            <p className="text-gray-500 text-sm font-medium">Estimated CO₂ Reduced (kg)</p>
+            <p className="text-4xl font-black text-gray-800">{co2Reduced}</p>
           </div>
         </div>
-        {/* Gamification & Rewards Board */}
+
         <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-400 mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="w-full md:w-1/2">
             <p className="text-gray-500 text-sm font-medium">Current Rank: <span className="font-bold text-gray-800">{badge}</span></p>
@@ -108,7 +124,6 @@ export default function OrderHistory() {
                <span>Reward Progress</span>
                <span>{ecoPoints % 500} / 500</span>
              </div>
-             {/* The Progress Bar */}
              <div className="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
                 <div 
                   className="bg-yellow-400 h-3 rounded-full transition-all duration-1000 ease-out" 
@@ -129,7 +144,7 @@ export default function OrderHistory() {
              </button>
           </div>
         </div>
-        {/* Magic AI Recipe Generator */}
+
         {completedOrders.length > 0 && (
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-md p-6 mb-8 text-white">
             <div className="flex justify-between items-center mb-4">
@@ -156,10 +171,9 @@ export default function OrderHistory() {
           </div>
         )}
 
-        {/* Order History */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-xl font-bold text-gray-800">My Orders</h2>
+            <h2 className="text-xl font-bold text-gray-800">Order History</h2>
           </div>
           
           {loading ? (
@@ -178,6 +192,53 @@ export default function OrderHistory() {
                       {order.status}
                     </span>
                   </div>
+
+                  {/* MEMBER 1: Review System Component */}
+                  {order.status === 'Completed' && !order.rating && activeReviewId !== order._id && (
+                    <button 
+                      onClick={() => setActiveReviewId(order._id)}
+                      className="text-blue-500 hover:text-blue-800 font-medium text-sm"
+                    >
+                      ★ Leave a Review
+                    </button>
+                  )}
+
+                  {order.rating && (
+                    <div className="text-right">
+                      <div className="text-yellow-400 text-xl">
+                        {"★".repeat(order.rating)}{"☆".repeat(5 - order.rating)}
+                      </div>
+                      <p className="text-xs text-gray-500 italic">"{order.reviewText}"</p>
+                    </div>
+                  )}
+
+                  {activeReviewId === order._id && (
+                    <div className="bg-green-600 p-4 rounded-md w-full md:w-auto mt-4 md:mt-0">
+                      <select 
+                        value={rating} 
+                        onChange={(e) => setRating(Number(e.target.value))}
+                        className="mb-2 w-full p-2 border rounded"
+                      >
+                        <option value="5">★★★★★ (5 Stars)</option>
+                        <option value="4">★★★★☆ (4 Stars)</option>
+                        <option value="3">★★★☆☆ (3 Stars)</option>
+                        <option value="2">★★☆☆☆ (2 Stars)</option>
+                        <option value="1">★☆☆☆☆ (1 Star)</option>
+                      </select>
+                      <input 
+                        type="text" 
+                        placeholder="How was it?" 
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        className="mb-2 w-full p-2 border rounded text-gray-900"
+                      />
+                      <div className="flex gap-2">
+                        <button onClick={() => handleSubmitReview(order._id)} className="bg-blue-700 text-white px-3 py-1 rounded text-sm w-full font-bold">Save</button>
+                        <button onClick={() => setActiveReviewId(null)} className="bg-gray-900 text-white px-3 py-1 rounded text-sm w-full font-bold">Cancel</button>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               ))}
               {orders.length === 0 && <div className="p-8 text-center text-gray-500">No orders yet. Go rescue some food!</div>}

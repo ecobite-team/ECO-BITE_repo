@@ -1,20 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import FoodMap from '../../components/FoodMap';
 
 export default function FoodPage() {
   const [foods, setFoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
+  
+  // NEW: The Favorites Memory Bank
   const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
-    // FIX: We ripped out the Mock Data. This is now hitting the live Database!
+    // 1. Fetch the food from the database
     const fetchFood = async () => {
       try {
         const response = await fetch('/api/food');
         const result = await response.json();
-        setFoods(result.data || []);
+        setFoods(result.data);
       } catch (error) {
         console.error("Failed to load food:", error);
       } finally {
@@ -23,21 +26,24 @@ export default function FoodPage() {
     };
     fetchFood();
 
+    // 2. Load any saved favorites from the browser's local storage
     const savedFavs = localStorage.getItem("ecoBiteFavorites");
     if (savedFavs) {
       setFavorites(JSON.parse(savedFavs));
     }
   }, []);
 
+  // NEW: The Heart Toggle Function
   const toggleFavorite = (id) => {
     let newFavs;
     if (favorites.includes(id)) {
-      newFavs = favorites.filter(favId => favId !== id); 
+      newFavs = favorites.filter(favId => favId !== id); // Remove it
     } else {
-      newFavs = [...favorites, id]; 
+      newFavs = [...favorites, id]; // Add it
     }
+    
     setFavorites(newFavs);
-    localStorage.setItem("ecoBiteFavorites", JSON.stringify(newFavs)); 
+    localStorage.setItem("ecoBiteFavorites", JSON.stringify(newFavs)); // Save to browser!
   };
 
   const handleReserve = async (foodId, foodName) => {
@@ -62,11 +68,12 @@ export default function FoodPage() {
     }
   };
 
+  // UPDATED: The Filter Logic now includes the Watchlist!
   const displayedFoods = foods.filter((item) => {
     if (activeFilter === "All") return true;
     if (activeFilter === "Vegan") return item.isVegan === true;
     if (activeFilter === "Halal") return item.isHalal === true;
-    if (activeFilter === "Favorites") return favorites.includes(item._id); 
+    if (activeFilter === "Favorites") return favorites.includes(item._id); // Only show hearted items!
     return true;
   });
 
@@ -74,7 +81,10 @@ export default function FoodPage() {
     <main className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">Available Surplus Food</h1>
+        
+        {!loading && <FoodMap foods={displayedFoods} />}
 
+        {/* UPDATED: We added 'Favorites' to our array of buttons */}
         <div className="flex gap-4 mb-8">
           {["All", "Vegan", "Halal", "Favorites"].map((filterType) => (
             <button
@@ -95,9 +105,11 @@ export default function FoodPage() {
           <p className="text-gray-500 text-lg">Loading delicious food...</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
             {displayedFoods.map((item) => (
               <div key={item._id} className="bg-white rounded-lg shadow-md p-6 border-t-4 border-green-500 relative">
                 
+                {/* NEW: The Clickable Heart in the top right corner */}
                 <div className="flex justify-between items-start mb-2">
                   <h2 className="text-xl font-bold text-gray-800 capitalize pr-8">{item.name}</h2>
                   <button 
@@ -119,7 +131,6 @@ export default function FoodPage() {
                     <span className="text-green-600 font-bold text-xl">${item.dynamicPrice || item.discountedPrice}</span>
                   </div>
                   
-                  {/* Your Dynamic Pricing Badge */}
                   {item.isSurgeDiscounted && (
                     <span className="text-xs font-bold text-white bg-red-500 px-2 py-1 rounded animate-pulse mt-1">
                       ⚡ Expiry Price Drop! ({item.hoursLeft}h left)
@@ -155,6 +166,7 @@ export default function FoodPage() {
                 </p>
               </div>
             )}
+
           </div>
         )}
       </div>
