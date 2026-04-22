@@ -104,7 +104,7 @@ export default function FoodPage() {
         
         {!loading && <FoodMap foods={displayedFoods} />}
 
-        <div className="flex gap-4 mb-8">
+        <div className="flex gap-4 mb-8 mt-8">
           {["All", "Vegan", "Halal", "Favorites"].map((filterType) => (
             <button
               key={filterType}
