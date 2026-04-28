@@ -101,29 +101,28 @@ export async function DELETE(request) {
   }
 }
 
-// PUT means we are EXPECTING to update existing data
+// PUT: Update an existing food item
 export async function PUT(request) {
   try {
-    // 1. Grab the ID from the URL (e.g., /api/food?id=123)
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
+    await dbConnect();
+    const data = await request.json();
     
-    // 2. Catch the updated data the frontend sent us
-    const body = await request.json();
+    // Extract the ID, and keep the rest of the data in a separate object
+    const { id, ...updateData } = data; 
 
     if (!id) {
-      return NextResponse.json({ error: "No ID provided" }, { status: 400 });
+      return NextResponse.json({ error: "Food ID is required" }, { status: 400 });
     }
 
-    await dbConnect();
+    const updatedFood = await FoodItem.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true } // Returns the newly updated document
+    );
 
-    // 3. Find the item by its ID, and overwrite it with the new data
-    const updatedFood = await FoodItem.findByIdAndUpdate(id, body, { new: true });
-
-    return NextResponse.json({ message: "Food updated successfully", data: updatedFood }, { status: 200 });
-
+    return NextResponse.json({ message: "Successfully updated", data: updatedFood }, { status: 200 });
   } catch (error) {
-    console.error("Failed to update food:", error);
-    return NextResponse.json({ error: "Failed to update item." }, { status: 500 });
+    console.error("Update error:", error);
+    return NextResponse.json({ error: "Failed to update food." }, { status: 500 });
   }
 }
